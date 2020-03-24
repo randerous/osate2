@@ -69,10 +69,15 @@ import org.eclipse.xtext.validation.Check;
 import org.eclipse.xtext.validation.CheckType;
 import org.eclipse.xtext.xbase.lib.StringExtensions;
 import org.osate.aadl2.*;
+import org.osate.aadl2.modelsupport.errorreporting.AnalysisErrorReporterManager;
+import org.osate.aadl2.modelsupport.errorreporting.NullAnalysisErrorReporter;
 import org.osate.aadl2.modelsupport.scoping.IEClassGlobalScopeProvider;
 import org.osate.aadl2.modelsupport.util.AadlUtil;
 import org.osate.aadl2.properties.PropertyNotPresentException;
 import org.osate.aadl2.util.Aadl2Util;
+import org.osate.annexsupport.AnnexRegistry;
+import org.osate.annexsupport.AnnexResolver;
+import org.osate.annexsupport.AnnexResolverRegistry;
 import org.osate.xtext.aadl2.properties.util.AadlProject;
 import org.osate.xtext.aadl2.properties.util.GetProperties;
 import org.osate.xtext.aadl2.properties.util.MemoryProperties;
@@ -568,6 +573,18 @@ public class Aadl2JavaValidator extends AbstractAadl2JavaValidator {
 	@Check(CheckType.NORMAL)
 	public void caseAadlPackage(AadlPackage pack) {
 		checkForDuplicateModelUnits(pack);
+		
+		List<DefaultAnnexSubclause> allSubclauses = EcoreUtil2.eAllOfType(pack, DefaultAnnexSubclause.class);
+		allSubclauses.stream().collect(Collectors.groupingBy(it -> it.getName().toLowerCase())).forEach((name, subclauses) -> {
+			AnnexResolverRegistry resolverRegistry = (AnnexResolverRegistry) AnnexRegistry.getRegistry(AnnexRegistry.ANNEX_RESOLVER_EXT_ID);
+			AnnexResolver resolver = resolverRegistry.getAnnexResolver(name);
+			if (resolver != null) {
+				AnalysisErrorReporterManager resolveErrManager = new AnalysisErrorReporterManager(NullAnalysisErrorReporter.factory);
+				List<AnnexSubclause> parsedSubclauses = subclauses.stream()
+						.map(DefaultAnnexSubclause::getParsedAnnexSubclause).collect(Collectors.toList());
+				resolver.resolveAnnex(name, parsedSubclauses, resolveErrManager);
+			}
+		});
 	}
 
 	@Check(CheckType.FAST)

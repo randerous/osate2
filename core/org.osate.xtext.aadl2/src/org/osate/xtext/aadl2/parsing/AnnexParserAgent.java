@@ -213,7 +213,7 @@ public class AnnexParserAgent extends LazyLinker {
 						QueuingParseErrorReporter resolveErrReporter = new QueuingParseErrorReporter();
 						AnalysisErrorReporterManager resolveErrManager = new AnalysisErrorReporterManager(
 								new AnalysisToParseErrorReporterAdapter.Factory(aadlRsrc -> resolveErrReporter));
-						resolver.resolveAnnex(annexName, Collections.singletonList(annexSection), resolveErrManager);
+//						resolver.resolveAnnex(annexName, Collections.singletonList(annexSection), resolveErrManager);
 						consumeMessages(resolveErrReporter, diagnosticsConsumer, annexText, line, offset);
 						if (resolveErrReporter.getNumErrors() != 0) {
 							setParsedAnnexSection.accept(null);
